@@ -16,6 +16,19 @@ vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
 vim.opt.termguicolors = true
 
+-- 终端设置
+vim.opt.splitbelow = true              -- 在底部打开新窗口
+vim.opt.shell = vim.fn.executable('pwsh') == 1 and 'pwsh' or 'bash'  -- 优先使用 PowerShell
+vim.api.nvim_create_autocmd('TermOpen', {
+  pattern = '*',
+  callback = function()
+    vim.opt_local.number = false          -- 终端窗口不显示行号
+    vim.opt_local.relativenumber = false  -- 终端窗口不显示相对行号
+    vim.opt_local.signcolumn = 'no'       -- 终端窗口不显示标记列
+    vim.cmd('startinsert')                -- 自动进入插入模式
+  end,
+})
+
 -- 引导 lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then

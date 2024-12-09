@@ -204,7 +204,15 @@ return {
   {
     'numToStr/Comment.nvim',
     config = function()
-      require('Comment').setup()
+      require('Comment').setup({
+        -- 添加额外的注释快捷键
+        toggler = {
+          line = '<C-/>',  -- 行注释切换
+        },
+        opleader = {
+          line = '<C-/>',  -- 行注释操作符
+        },
+      })
     end,
   },
 

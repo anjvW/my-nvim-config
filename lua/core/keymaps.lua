@@ -110,6 +110,14 @@ vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = '下一个缓冲区' })
 vim.keymap.set('n', '<leader>bp', ':bprevious<CR>', { desc = '上一个缓冲区' })
 vim.keymap.set('n', '<leader>bd', ':bdelete<CR>', { desc = '关闭当前缓冲区' })
 
+-- 终端相关快捷键
+vim.keymap.set('n', '<leader>t', ':split | terminal<CR>i', { desc = '打开终端' })
+vim.keymap.set('t', '<Esc>', '<C-\\><C-n>', { desc = '退出终端插入模式' })
+vim.keymap.set('t', '<C-h>', '<C-\\><C-n><C-w>h', { desc = '终端模式切换到左窗口' })
+vim.keymap.set('t', '<C-j>', '<C-\\><C-n><C-w>j', { desc = '终端模式切换到下窗口' })
+vim.keymap.set('t', '<C-k>', '<C-\\><C-n><C-w>k', { desc = '终端模式切换到上窗口' })
+vim.keymap.set('t', '<C-l>', '<C-\\><C-n><C-w>l', { desc = '终端模式切换到右窗口' })
+
 -- 导出 Git 快捷键设置函数
 return {
   setup_git_keymaps = setup_git_keymaps
