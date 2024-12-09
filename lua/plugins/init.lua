@@ -1,5 +1,5 @@
 return {
-  -- Theme
+  -- 主题
   {
     "folke/tokyonight.nvim",
     lazy = false,
@@ -9,26 +9,38 @@ return {
     end,
   },
 
-  -- Treesitter for better syntax highlighting
+  -- 语法高亮
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter-textobjects",
+    },
     config = function()
       require("nvim-treesitter.configs").setup({
         ensure_installed = { 
           "markdown", "markdown_inline", "lua", "vim",
           "php", "python", "go", "rust", "javascript",
-          "typescript", "html", "css", "json", "yaml",
+          "html", "css", "json", "yaml",
           "bash", "dockerfile"
         },
         highlight = { enable = true },
         indent = { enable = true },
         auto_install = true,
+        incremental_selection = {
+          enable = true,
+          keymaps = {
+            init_selection = "<C-w>",
+            node_incremental = "<C-w>",
+            node_decremental = "<C-S-w>",
+            scope_incremental = false,
+          },
+        },
       })
     end,
   },
 
-  -- LSP Support
+  -- LSP 支持
   {
     "neovim/nvim-lspconfig",
     dependencies = {
@@ -42,6 +54,7 @@ return {
       "L3MON4D3/LuaSnip",
       "saadparwaiz1/cmp_luasnip",
       "j-hui/fidget.nvim",
+      "nvimtools/none-ls.nvim",
     },
     config = function()
       require("fidget").setup()
@@ -52,9 +65,8 @@ return {
           "pyright",
           "gopls",
           "rust_analyzer",
-          "typescript",
           "html",
-          "intelephense",  -- PHP
+          "intelephense"  -- PHP
         },
         automatic_installation = true,
       })
@@ -62,13 +74,12 @@ return {
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
       local lspconfig = require('lspconfig')
 
-      -- Setup language servers
+      -- 设置语言服务器
       local servers = {
         'lua_ls',
         'pyright',
         'gopls',
         'rust_analyzer',
-        'typescript',
         'html',
         'intelephense'
       }
@@ -79,41 +90,19 @@ return {
         })
       end
 
-      -- Global mappings
-      vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = '显示诊断信息' })
-      vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = '上一个诊断' })
-      vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = '下一个诊断' })
-      vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = '诊断列表' })
-
-      -- Use LspAttach autocommand to only map the following keys
-      -- after the language server attaches to the current buffer
-      vim.api.nvim_create_autocmd('LspAttach', {
-        group = vim.api.nvim_create_augroup('UserLspConfig', {}),
-        callback = function(ev)
-          local opts = { buffer = ev.buf }
-          vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, vim.tbl_extend('force', opts, { desc = '跳转到声明' }))
-          vim.keymap.set('n', 'gd', vim.lsp.buf.definition, vim.tbl_extend('force', opts, { desc = '跳转到定义' }))
-          vim.keymap.set('n', 'K', vim.lsp.buf.hover, vim.tbl_extend('force', opts, { desc = '显示文档' }))
-          vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, vim.tbl_extend('force', opts, { desc = '跳转到实现' }))
-          vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, vim.tbl_extend('force', opts, { desc = '显示签名帮助' }))
-          vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, vim.tbl_extend('force', opts, { desc = '添加工作区文件夹' }))
-          vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, vim.tbl_extend('force', opts, { desc = '移除工作区文件夹' }))
-          vim.keymap.set('n', '<leader>wl', function()
-            print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-          end, vim.tbl_extend('force', opts, { desc = '列出工作区文件夹' }))
-          vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, vim.tbl_extend('force', opts, { desc = '类型定义' }))
-          vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, vim.tbl_extend('force', opts, { desc = '重命名' }))
-          vim.keymap.set({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, vim.tbl_extend('force', opts, { desc = '代码操作' }))
-          vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', opts, { desc = '查找引用' }))
-          vim.keymap.set('n', '<leader>fm', function()
-            vim.lsp.buf.format { async = true }
-          end, vim.tbl_extend('force', opts, { desc = '格式化代码' }))
-        end,
+      -- 添加 null-ls 配置
+      local null_ls = require("null-ls")
+      null_ls.setup({
+        sources = {
+          null_ls.builtins.formatting.prettier.with({
+            filetypes = { "markdown", "json", "yaml", "html", "css", "javascript" },
+          }),
+        },
       })
     end,
   },
 
-  -- Completion
+  -- 代码补全
   {
     "hrsh7th/nvim-cmp",
     dependencies = {
@@ -151,7 +140,7 @@ return {
     end,
   },
 
-  -- Markdown Preview
+  -- Markdown 预览
   {
     "iamcco/markdown-preview.nvim",
     cmd = { "MarkdownPreview" },
@@ -161,12 +150,12 @@ return {
     end,
     ft = { "markdown" },
     keys = {
-      { "<leader>mp", ":MarkdownPreview<CR>", desc = "Markdown Preview" },
-      { "<leader>ms", ":MarkdownPreviewStop<CR>", desc = "Markdown Preview Stop" },
+      { "<leader>mp", ":MarkdownPreview<CR>", desc = "Markdown 预览" },
+      { "<leader>ms", ":MarkdownPreviewStop<CR>", desc = "Markdown 预览停止" },
     },
   },
 
-  -- File explorer
+  -- 文件浏览器
   {
     "nvim-neo-tree/neo-tree.nvim",
     dependencies = {
@@ -180,7 +169,7 @@ return {
     end,
   },
 
-  -- Status line
+  -- 状态栏
   {
     'nvim-lualine/lualine.nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
@@ -189,7 +178,7 @@ return {
     end,
   },
 
-  -- Which-key for keybinding hints
+  -- 快捷键提示
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
@@ -202,7 +191,7 @@ return {
     end,
   },
 
-  -- Autopairs
+  -- 自动配对
   {
     'windwp/nvim-autopairs',
     event = "InsertEnter",
@@ -211,7 +200,7 @@ return {
     end,
   },
 
-  -- Comment
+  -- 注释
   {
     'numToStr/Comment.nvim',
     config = function()
@@ -219,7 +208,7 @@ return {
     end,
   },
 
-  -- Telescope (fuzzy finder)
+  -- 模糊查找
   {
     'nvim-telescope/telescope.nvim',
     tag = '0.1.5',
@@ -227,28 +216,70 @@ return {
     config = function()
       local telescope = require('telescope')
       telescope.setup()
-      
-      -- Keymaps
-      local builtin = require('telescope.builtin')
-      vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-      vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-      vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
-      vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
     end,
   },
 
-  -- Git integration
+  -- Git 集成
   {
     'lewis6991/gitsigns.nvim',
     config = function()
-      require('gitsigns').setup()
+      local keymaps = require('core.keymaps')
+      require('gitsigns').setup({
+        signs = {
+          add          = { text = '│' },
+          change       = { text = '│' },
+          delete       = { text = '_' },
+          topdelete    = { text = '‾' },
+          changedelete = { text = '~' },
+          untracked    = { text = '┆' },
+        },
+        on_attach = keymaps.setup_git_keymaps
+      })
     end,
   },
 
-  -- Indent guides
+  -- 缩进指示线
   {
     "lukas-reineke/indent-blankline.nvim",
     main = "ibl",
     opts = {},
+  },
+
+  -- 多光标编辑
+  {
+    "mg979/vim-visual-multi",
+    branch = "master",
+    event = "VeryLazy",
+    config = function()
+      -- 基础键位设置
+      vim.g.VM_leader = '\\'  -- 设置 visual-multi 的 leader 键
+      vim.g.VM_maps = {
+        ['Find Under'] = '<C-n>',                 -- 开始选择当前单词
+        ['Find Subword Under'] = '<C-n>',         -- 选择子单词
+        ['Select All'] = '\\A',                   -- 选择所有单词
+        ['Select h'] = '\\h',                     -- 向左扩展选择
+        ['Select l'] = '\\l',                     -- 向右扩展选择
+        ['Add Cursor Up'] = '<S-Up>',             -- 向上添加光标
+        ['Add Cursor Down'] = '<S-Down>',         -- 向下添加光标
+        ['Add Cursor At Pos'] = '\\\\',           -- 在当前位置添加光标
+        ['Start Regex Search'] = '\\/',           -- 开始正则搜索
+        ['Visual Regex'] = '\\/',                 -- 可视模式下的正则搜索
+        ['Visual All'] = '\\A',                   -- 选择所有匹配项
+        ['Visual Add'] = '\\a',                   -- 添加当前选择
+        ['Visual Find'] = '\\f',                  -- 查找并选择
+        ['Visual Cursors'] = '\\c',               -- 在每行末尾添加光标
+        ['Select Cursor Up'] = '<C-Up>',          -- 向上选择
+        ['Select Cursor Down'] = '<C-Down>',      -- 向下选择
+        ['Undo'] = 'u',                           -- 撤销
+        ['Redo'] = '<C-r>',                       -- 重做
+        ['Exit'] = '<Esc>',                       -- 退出多光标模式
+      }
+
+      -- 其他设置
+      vim.g.VM_theme = 'ocean'                    -- 设置主题
+      vim.g.VM_highlight_matches = 'underline'    -- 匹配项显示下划线
+      vim.g.VM_show_warnings = 1                  -- 显示警告信息
+      vim.g.VM_silent_exit = 1                    -- 静默退出
+    end,
   },
 }

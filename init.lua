@@ -1,8 +1,8 @@
--- Set leader key to space
+-- 设置 leader 键为空格
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
--- Basic settings
+-- 基础设置
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.mouse = 'a'
@@ -16,7 +16,7 @@ vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
 vim.opt.termguicolors = true
 
--- Bootstrap lazy.nvim
+-- 引导 lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -30,8 +30,8 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Load plugins
+-- 加载插件
 require("lazy").setup("plugins")
 
--- Load core configurations
+-- 加载核心配置
 require("core.keymaps")
