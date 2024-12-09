@@ -94,9 +94,13 @@ return {
       local null_ls = require("null-ls")
       null_ls.setup({
         sources = {
+          -- Prettier 格式化
           null_ls.builtins.formatting.prettier.with({
             filetypes = { "markdown", "json", "yaml", "html", "css", "javascript" },
           }),
+          -- Python 格式化
+          null_ls.builtins.formatting.black,  -- 代码格式化
+          null_ls.builtins.formatting.isort,  -- 导入语句排序
         },
       })
     end,
