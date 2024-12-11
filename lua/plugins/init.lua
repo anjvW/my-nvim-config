@@ -5,6 +5,13 @@ return {
     lazy = false,
     priority = 1000,
     config = function()
+      require("tokyonight").setup({
+        transparent = true,    -- 启用透明背景
+        styles = {
+          sidebars = "transparent",  -- 侧边栏透明
+          floats = "transparent",    -- 浮动窗口透明
+        },
+      })
       vim.cmd([[colorscheme tokyonight]])
     end,
   },
@@ -168,7 +175,39 @@ return {
       "MunifTanjim/nui.nvim",
     },
     config = function()
-      require("neo-tree").setup()
+      require("neo-tree").setup({
+        window = {
+          mappings = {
+            -- 文件操作快捷键
+            ["a"] = { 
+              command = "add",
+              config = {
+                show_path = "relative" -- 显示相对路径
+              }
+            },  -- 新建文件/文件夹
+            ["d"] = "delete",         -- 删���
+            ["r"] = "rename",         -- 重命名
+            ["c"] = "copy",           -- 复制
+            ["m"] = "move",           -- 移动
+            ["q"] = "close_window",   -- 关闭窗口
+            ["R"] = "refresh",        -- 刷新
+            ["?"] = "show_help",      -- 显示帮助
+            ["<space>"] = { 
+              "toggle_node", 
+              nowait = false 
+            },  -- 展开/折叠
+          }
+        },
+        filesystem = {
+          filtered_items = {
+            visible = false,
+            hide_dotfiles = false,    -- 不隐藏以点开头的文件
+            hide_gitignored = false,  -- 不隐藏 git 忽略的文件
+          },
+          follow_current_file = true, -- 自动定位到当前文件
+          use_libuv_file_watcher = true, -- 启用文件监视器
+        },
+      })
       vim.keymap.set('n', '<leader>e', ':Neotree toggle<CR>', { silent = true })
     end,
   },
@@ -292,6 +331,143 @@ return {
       vim.g.VM_highlight_matches = 'underline'    -- 匹配项显示下划线
       vim.g.VM_show_warnings = 1                  -- 显示警告信息
       vim.g.VM_silent_exit = 1                    -- 静默退出
+    end,
+  },
+
+  -- 启动界面
+  {
+    'goolord/alpha-nvim',
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    config = function()
+      local alpha = require('alpha')
+      local dashboard = require('alpha.themes.dashboard')
+      
+      -- 自定义标题
+      dashboard.section.header.val = {
+        [[                                                    ]],
+        [[                                                    ]],
+        [[███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗]],
+        [[███╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║]],
+        [[██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║]],
+        [[██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║]],
+        [[██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║]],
+        [[╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝]],
+        [[                                                    ]],
+        [[                [ Version 1.0.0 ]                   ]],
+        [[                                                    ]],
+      }
+
+      -- 自定义快捷键
+      dashboard.section.buttons.val = {
+        dashboard.button("n", "  新建文件", ":ene <BAR> startinsert <CR>"),
+        dashboard.button("f", "  查找文件", ":Telescope find_files<CR>"),
+        dashboard.button("r", "  最近文件", ":Telescope oldfiles<CR>"),
+        dashboard.button("t", "  查找文本", ":Telescope live_grep<CR>"),
+        dashboard.button("c", "  配置文件", ":e $MYVIMRC <CR>"),
+        dashboard.button("p", "  插件管理", ":Lazy<CR>"),
+        dashboard.button("q", "  退出", ":qa<CR>"),
+      }
+
+      -- 自定义页脚
+      local function footer()
+        local total_plugins = #vim.tbl_keys(require("lazy").plugins())
+        local datetime = os.date(" %Y-%m-%d   %H:%M:%S")
+        return "已加载 " .. total_plugins .. " 个插件   " .. datetime
+      end
+      dashboard.section.footer.val = footer()
+
+      -- 设置布局
+      dashboard.config.layout = {
+        { type = "padding", val = 2 },
+        dashboard.section.header,
+        { type = "padding", val = 2 },
+        dashboard.section.buttons,
+        { type = "padding", val = 1 },
+        dashboard.section.footer,
+      }
+
+      -- 设置选项
+      dashboard.config.opts.noautocmd = true
+
+      -- 设置高亮
+      for _, button in ipairs(dashboard.section.buttons.val) do
+        button.opts.hl = "AlphaButtons"
+        button.opts.hl_shortcut = "AlphaShortcut"
+      end
+      dashboard.section.header.opts.hl = "AlphaHeader"
+      dashboard.section.buttons.opts.hl = "AlphaButtons"
+      dashboard.section.footer.opts.hl = "AlphaFooter"
+
+      alpha.setup(dashboard.config)
+
+      -- 自动启动 alpha
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "LazyVimStarted",
+        callback = function()
+          dashboard.section.footer.val = footer()
+          pcall(vim.cmd.AlphaRedraw)
+        end,
+      })
+    end
+  },
+
+  -- 标签栏
+  {
+    'akinsho/bufferline.nvim',
+    version = "*",
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    config = function()
+      require("bufferline").setup({
+        options = {
+          -- 使用 nvim 内置lsp
+          diagnostics = "nvim_lsp",
+          -- 左侧让出 neo-tree 的位置
+          offsets = {{
+            filetype = "neo-tree",
+            text = "File Explorer",
+            highlight = "Directory",
+            text_align = "left"
+          }},
+          -- 显示 LSP 报错图标
+          diagnostics_indicator = function(count, level)
+            local icon = level:match("error") and " " or " "
+            return " " .. icon .. count
+          end,
+          -- 分割符样式
+          separator_style = "thin",
+          -- 显示关闭按钮
+          show_close_icon = true,
+          -- 鼠标操作
+          show_buffer_close_icons = true,
+          -- 关闭按钮样式
+          close_icon = '',
+          -- 缓冲区图标样式
+          buffer_close_icon = '',
+          -- 修改图标样式
+          modified_icon = '●',
+          -- 左侧显示序号
+          numbers = "ordinal",
+          -- 持久化标签页
+          persist_buffer_sort = true,
+        }
+      })
+
+      -- 快捷键设置
+      -- 数字快捷键（不显示在 which-key 中）
+      for i = 1, 9 do
+        vim.keymap.set('n', '<leader>' .. i, 
+          '<Cmd>BufferLineGoToBuffer ' .. i .. '<CR>', 
+          { silent = true })
+      end
+      
+      -- 其他标签页快捷键（显示在 which-key 中）
+      vim.keymap.set('n', '<leader>$', '<Cmd>BufferLineGoToBuffer -1<CR>', { desc = '切换到最后一个标签页' })
+      vim.keymap.set('n', '<leader>H', '<Cmd>BufferLineMovePrev<CR>', { desc = '向左移动标签页' })
+      vim.keymap.set('n', '<leader>L', '<Cmd>BufferLineMoveNext<CR>', { desc = '向右移动标签页' })
+      vim.keymap.set('n', '<leader>bp', '<Cmd>BufferLinePick<CR>', { desc = '选择标签页' })
+      vim.keymap.set('n', '<leader>bc', '<Cmd>BufferLinePickClose<CR>', { desc = '选择关闭标签页' })
+      vim.keymap.set('n', '<leader>bse', '<Cmd>BufferLineSortByExtension<CR>', { desc = '按扩展名排序' })
+      vim.keymap.set('n', '<leader>bsd', '<Cmd>BufferLineSortByDirectory<CR>', { desc = '按目录排序' })
     end,
   },
 }

@@ -16,6 +16,12 @@ vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
 vim.opt.termguicolors = true
 
+-- 透明背景设置
+vim.api.nvim_set_hl(0, "Normal", { bg = "NONE", ctermbg = "NONE" })
+vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE", ctermbg = "NONE" })
+vim.api.nvim_set_hl(0, "NormalNC", { bg = "NONE", ctermbg = "NONE" })
+vim.api.nvim_set_hl(0, "SignColumn", { bg = "NONE", ctermbg = "NONE" })
+
 -- 终端设置
 vim.opt.splitbelow = true              -- 在底部打开新窗口
 vim.opt.shell = vim.fn.executable('pwsh') == 1 and 'pwsh' or 'bash'  -- 优先使用 PowerShell
