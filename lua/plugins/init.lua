@@ -176,9 +176,26 @@ return {
     },
     config = function()
       require("neo-tree").setup({
+        sources = {
+          "filesystem",
+          "buffers",
+          "git_status",
+          "document_symbols",
+        },
+        source_selector = {
+          winbar = true,
+          content_layout = "center",
+          sources = {
+            { source = "filesystem", display_name = " 文件" },
+            { source = "buffers", display_name = " 缓冲区" },
+            { source = "git_status", display_name = "󰊢 Git" },
+            { source = "document_symbols", display_name = " 符号" },
+          },
+        },
         window = {
+          position = "left",
+          width = 30,
           mappings = {
-            -- 文件操作快捷键
             ["a"] = { 
               command = "add",
               config = {
@@ -204,8 +221,47 @@ return {
             hide_dotfiles = false,    -- 不隐藏以点开头的文件
             hide_gitignored = false,  -- 不隐藏 git 忽略的文件
           },
-          follow_current_file = true, -- 自动定位到当前文件
+          follow_current_file = {
+            enabled = true,           -- 自动定位到当前文件
+            leave_dirs_open = true,   -- 保持目录打开
+          },
           use_libuv_file_watcher = true, -- 启用文件监视器
+          group_empty_dirs = true,     -- 空目录分组
+          hijack_netrw_behavior = "open_default", -- 接管 netrw
+          window = {
+            mappings = {
+              ["<bs>"] = "navigate_up",
+              ["."] = "set_root",
+              ["H"] = "toggle_hidden",
+              ["/"] = "fuzzy_finder",
+              ["D"] = "fuzzy_finder_directory",
+              ["f"] = "filter_on_submit",
+              ["<c-x>"] = "clear_filter",
+              ["[g"] = "prev_git_modified",
+              ["]g"] = "next_git_modified",
+            },
+          },
+        },
+        buffers = {
+          follow_current_file = {
+            enabled = true,          -- 自动定位到当前缓冲区
+            leave_dirs_open = true,  -- 保持目录打开
+          },
+          group_empty_dirs = true,   -- 空目录分组
+          show_unloaded = true,      -- 显示未加载的缓冲区
+        },
+        git_status = {
+          window = {
+            mappings = {
+              ["A"]  = "git_add_all",
+              ["gu"] = "git_unstage_file",
+              ["ga"] = "git_add_file",
+              ["gr"] = "git_revert_file",
+              ["gc"] = "git_commit",
+              ["gp"] = "git_push",
+              ["gg"] = "git_commit_and_push",
+            },
+          },
         },
       })
       vim.keymap.set('n', '<leader>e', ':Neotree toggle<CR>', { silent = true })
@@ -347,7 +403,7 @@ return {
         [[                                                    ]],
         [[                                                    ]],
         [[███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗]],
-        [[████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║]],
+        [[████╗  ██║██╔═���══╝██╔═══���█╗██║   ██║██║████╗ ████║]],
         [[██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║]],
         [[██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║]],
         [[██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║]],
@@ -447,7 +503,7 @@ return {
           modified_icon = '●',
           -- 左侧显示序号
           numbers = "ordinal",
-          -- 持久化标签页
+          -- 持���化标签页
           persist_buffer_sort = true,
         }
       })
@@ -468,6 +524,104 @@ return {
       vim.keymap.set('n', '<leader>bc', '<Cmd>BufferLinePickClose<CR>', { desc = '选择关闭标签页' })
       vim.keymap.set('n', '<leader>bse', '<Cmd>BufferLineSortByExtension<CR>', { desc = '按扩展名排序' })
       vim.keymap.set('n', '<leader>bsd', '<Cmd>BufferLineSortByDirectory<CR>', { desc = '按目录排序' })
+    end,
+  },
+
+  -- ChatGPT 集成
+  {
+    "jackMort/ChatGPT.nvim",
+    event = "VeryLazy",
+    dependencies = {
+      "MunifTanjim/nui.nvim",
+      "nvim-lua/plenary.nvim",
+      "nvim-telescope/telescope.nvim"
+    },
+    config = function()
+      -- 检查 API 密钥是否存在
+      if not vim.fn.getenv('deepseek_key') then
+        vim.notify('请设置环境变量 deepseek_key', vim.log.levels.WARN)
+        return
+      end
+
+      -- 定义可用的模型
+      local models = {
+        ["deepseek-chat"] = "DeepSeek Chat",
+        ["deepseek-coder"] = "DeepSeek Coder",
+        ["deepseek-coder-6.7b-instruct"] = "DeepSeek Coder 6.7B",
+        ["deepseek-coder-1.3b-instruct"] = "DeepSeek Coder 1.3B",
+      }
+
+      -- 创建模型选择命令
+      vim.api.nvim_create_user_command('ChatGPTSelectModel', function()
+        local model_names = {}
+        local model_ids = {}
+        for id, name in pairs(models) do
+          table.insert(model_names, name)
+          table.insert(model_ids, id)
+        end
+
+        vim.ui.select(model_names, {
+          prompt = '选择模型：',
+        }, function(choice)
+          if choice then
+            for i, name in ipairs(model_names) do
+              if name == choice then
+                vim.g.chatgpt_model = model_ids[i]
+                vim.notify('已切换到模型：' .. choice)
+                break
+              end
+            end
+          end
+        end)
+      end, {})
+
+      require("chatgpt").setup({
+        api_key_cmd = ("echo %s"):format(vim.fn.getenv('deepseek_key')),
+        openai_params = {
+          model = vim.g.chatgpt_model or "deepseek-chat",  -- 使用选择的模型或默认模型
+          frequency_penalty = 0,
+          presence_penalty = 0,
+          max_tokens = 2000,
+          temperature = 0.7,
+          top_p = 1,
+          n = 1,
+        },
+        openai_edit_params = {
+          model = vim.g.chatgpt_model or "deepseek-chat",  -- 使用选择的模型或默认模型
+          temperature = 0.7,
+          top_p = 1,
+          n = 1,
+        },
+        api_host_cmd = "echo https://api.deepseek.com/v1",
+        api_base_url = "https://api.deepseek.com/v1",
+        openai_api_base_url = "https://api.deepseek.com/v1",
+        actions_paths = {},
+        show_quickfixes_cmd = "Trouble quickfix",
+        predefined_chat_gpt_prompts = "https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/main/prompts.csv",
+        popup_layout = {
+          default = "center",
+          center = {
+            width = "80%",
+            height = "80%",
+          },
+          right = {
+            width = "30%",
+            width_settings_open = "50%",
+          },
+        },
+        system_prompt = "You are a helpful AI assistant and code expert.",
+      })
+
+      -- 设置快捷键
+      vim.keymap.set('n', '<leader>cc', ':ChatGPT<CR>', { desc = '打开 ChatGPT' })
+      vim.keymap.set('n', '<leader>ce', ':ChatGPTEditWithInstruction<CR>', { desc = '使用 GPT 编辑' })
+      vim.keymap.set('v', '<leader>ce', ':ChatGPTEditWithInstruction<CR>', { desc = '使用 GPT 编辑选中内容' })
+      vim.keymap.set('n', '<leader>cg', ':ChatGPTRun grammar_correction<CR>', { desc = 'GPT 语法修正' })
+      vim.keymap.set('n', '<leader>ct', ':ChatGPTRun translate<CR>', { desc = 'GPT 翻译' })
+      vim.keymap.set('n', '<leader>ck', ':ChatGPTRun keywords<CR>', { desc = '提取关键词' })
+      vim.keymap.set('n', '<leader>cd', ':ChatGPTRun docstring<CR>', { desc = '生成文档字符串' })
+      vim.keymap.set('n', '<leader>ca', ':ChatGPTActAs<CR>', { desc = 'GPT 角色扮演' })
+      vim.keymap.set('n', '<leader>cm', ':ChatGPTSelectModel<CR>', { desc = '选择 GPT 模型' })
     end,
   },
 }

@@ -64,3 +64,11 @@ if vim.fn.has('win32') == 1 then
     vim.opt.fileencoding = "utf-8"
     vim.opt.fileencodings = "utf-8,ucs-bom,cp936,gb18030,big5,euc-jp,euc-kr,latin1"
 end
+
+-- OpenAI 配置
+vim.env.OPENAI_API_KEY = vim.fn.getenv('deepseek_key')  -- 从环境变量获取 API 密钥
+vim.env.OPENAI_API_HOST = "https://api.deepseek.com"
+
+-- 如果需要代理
+vim.env.http_proxy = "http://127.0.0.1:7890"
+vim.env.https_proxy = "http://127.0.0.1:7890"
