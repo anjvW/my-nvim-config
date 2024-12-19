@@ -54,3 +54,13 @@ require("lazy").setup("plugins")
 
 -- 加载核心配置
 require("core.keymaps")
+
+-- 设置文件编码为 UTF-8
+vim.opt.fileencoding = "utf-8"
+vim.opt.encoding = "utf-8"
+
+-- Windows 系统下的编码设置
+if vim.fn.has('win32') == 1 then
+    vim.opt.fileencoding = "utf-8"
+    vim.opt.fileencodings = "utf-8,ucs-bom,cp936,gb18030,big5,euc-jp,euc-kr,latin1"
+end
